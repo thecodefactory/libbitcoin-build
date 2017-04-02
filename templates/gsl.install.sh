@@ -313,7 +313,7 @@ if [[ $PARALLEL ]]; then
     echo "Using shell-defined PARALLEL value."
 elif [[ $OS == Linux ]]; then
     PARALLEL=`nproc`
-elif [[ ($OS == Darwin) || ($OS == OpenBSD) ]]; then
+elif [[ ($OS == Darwin) || ($OS == OpenBSD) || ($OS == DragonFly) ]]; then
     PARALLEL=`sysctl -n hw.ncpu`
 else
     echo "Unsupported system: $OS"
@@ -330,6 +330,10 @@ elif [[ $OS == OpenBSD ]]; then
     export CC="egcc"
     export CXX="eg++"
     STDLIB="estdc++"
+elif [[ $OS == DragonFly ]]; then
+    make() { gmake "$@"; }
+    export CXXFLAGS="--std=c++0x $CXXFLAGS"
+    STDLIB="stdc++"
 else # Linux
     STDLIB="stdc++"
 fi
@@ -724,7 +728,12 @@ initialize_boost_icu_configuration()
         BOOST_ICU_POSIX="off"
 
         # Extract ICU libs from package config variables and augment with -ldl.
-        ICU_LIBS=( `pkg-config icu-i18n --libs` "-ldl" )
+        if [[ ($OS == DragonFly) ]]; then
+            ICU_LIBS=`pkg-config icu-i18n --libs | sed 's/-L.*\/lib -l/-l/'`
+            ICU_LIBS="$ICU_LIBS -ldl"
+        else
+            ICU_LIBS=( `pkg-config icu-i18n --libs` "-ldl" )
+        fi
 
         # This is a hack for boost m4 scripts that fail with ICU dependency.
         # See custom edits in ax-boost-locale.m4 and ax_boost_regex.m4.
@@ -983,8 +992,8 @@ for generate.repository by name as _repository
     define my.out_file = "$(_repository.name)/install.sh"
     notify(my.out_file)
     output(my.out_file)
-    
-    shebang("bash")
+
+    shebang("bin", "bash")
     define my.install = _repository->install
     copyleft(_repository.name)
     install_documentation(_repository)
@@ -1010,7 +1019,7 @@ for generate.repository by name as _repository
     
     heading1("Define build functions.")
     define_build_functions()
-        
+
     heading1("The master build function.")
     define_build_all(my.install)
 

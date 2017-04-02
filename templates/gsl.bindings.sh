@@ -55,8 +55,8 @@ for generate.repository by name as _repository
     define my.out_file = "$(_repository.name)/bindings.sh"
     notify(my.out_file)
     output(my.out_file)
-    
-    shebang("sh")
+
+    shebang("bin", "sh")
     copyleft(_repository.name)
     define my.interface = bitcoin_to_include(_repository.name)
     bindings_content_sh(my.interface)

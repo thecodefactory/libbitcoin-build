@@ -587,8 +587,8 @@ function global.trace(text, context)
     endif
 endfunction
 
-function global.shebang(interpreter)
-    write_line("#!/bin/$(my.interpreter)")
+function global.shebang(path, interpreter)
+    write_line("#!/$(my.path)/$(my.interpreter)")
 endfunction
 
 function global.batch_no_echo()
